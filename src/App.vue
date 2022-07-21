@@ -1,6 +1,10 @@
 <template>
   <div class="app">
     <h1>page with dialogs</h1>
+    <my-input
+      v-model="searchQuery"
+      placeholder="...search"
+    />
     <div class="app__btns">
       <my-button @click="showDialog">create post</my-button>
       <my-select
@@ -13,8 +17,20 @@
     <my-dialog v-model:show="dialogVisible">
       <post-form @create="createPost"/>
     </my-dialog>
-    <post-list :posts="posts" @remove="removePost" v-if="!isPostLoading"/>
+    <post-list :posts="sortedAndSearchedPosts" @remove="removePost" v-if="!isPostLoading"/>
     <div v-else>loading...</div>
+<!--    <div class="page_wrapper">-->
+<!--      <div-->
+<!--          v-for="pageNumber in totalPages"-->
+<!--          :key="pageNumber"-->
+<!--          class="page"-->
+<!--          :class="{-->
+<!--            'current-page': page === pageNumber-->
+<!--          }"-->
+<!--          @click="changePage(pageNumber)"-->
+<!--      >-->
+<!--        {{pageNumber}}</div>-->
+<!--    </div>-->
   </div>
 </template>
 
@@ -23,32 +39,20 @@ import PostForm from '@/components/PostForm';
 import PostList from '@/components/PostList';
 import MyDialog from '@/components/UI/MyDialog';
 import axios from 'axios';
+import MyInput from '@/components/UI/MyInput';
 
 export default {
-  components: {MyDialog, PostList, PostForm},
+  components: {MyInput, MyDialog, PostList, PostForm},
   data() {
     return {
-      posts: [
-        // {
-        //   id: 1,
-        //   name: 'js',
-        //   body: 'some decription about js'
-        // },
-        // {
-        //   id: 2,
-        //   name: 'ts',
-        //   body: 'some decription about ts'
-        // },
-        // {
-        //   id: 3,
-        //   name: 'vue',
-        //   body: 'some decription about vue'
-        // }
-      ],
+      posts: [],
       dialogVisible: false,
-      // modificatorValue: ''
       isPostLoading: false,
       selectedSort: '',
+      searchQuery: '',
+      page: 1,
+      limit: 10,
+      totalPages: 0,
       sortOptions: [
         {value: 'title', name: 'by name'},
         {value: 'body', name: 'by content'}
@@ -66,10 +70,20 @@ export default {
     showDialog() {
       this.dialogVisible = true
     },
+    // changePage(pageNumber){
+    //   this.page = pageNumber
+    // },
     async fetchPosts() {
       try {
         this.isPostLoading = true
-        const response = await axios.get('https://jsonplaceholder.typicode.com/posts?_limit=10')
+        const response = await axios.get(`https://jsonplaceholder.typicode.com/posts?`, {
+          params: {
+            _limit: this.limit,
+            _page: this.page
+          }
+        })
+        console.log(response)
+        this.totalPages = Math.ceil(response.headers['x-total-count'] / this.limit)
         this.posts = response.data
       } catch (e) {
         alert(e)
@@ -84,16 +98,16 @@ export default {
   computed: {
     sortedPosts(){
       return [...this.posts].sort((post1, post2) => post1[this.selectedSort]?.localeCompare(post2[this.selectedSort]))
+    },
+    sortedAndSearchedPosts(){
+      return this.sortedPosts.filter(post => post.title.toLowerCase().includes(this.searchQuery.toLowerCase()))
     }
   },
   watch: {
-    // selectedSort(newValue){
-    //  this.posts.sort((post1, post2) => {
-    //   return post1[newValue]?.localeCompare(post2[newValue])
-    //  })
-    }
+    // page(){
+    //   this.fetchPosts()
+    // }
   }
-
 }
 
 </script>
@@ -114,5 +128,15 @@ export default {
   display: flex;
   justify-content: space-between;
 }
-
+.page_wrapper {
+  display: flex;
+  margin-top: 15px;
+}
+.page {
+  padding: 10px;
+  border: 1px solid black;
+}
+.current-page {
+  border: 2px solid teal;
+}
 </style>
