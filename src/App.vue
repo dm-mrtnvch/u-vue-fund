@@ -1,9 +1,15 @@
 <template>
   <div class="app">
     <h1>page with dialogs</h1>
-<!--    <my-button @click="fetchPosts">get posts</my-button>-->
-<!--    <input type="text" v-model="modificatorValue">-->
-    <my-button @click="showDialog">create post</my-button>
+    <div class="app__btns">
+      <my-button @click="showDialog">create post</my-button>
+      <my-select
+          v-model="selectedSort"
+          :options="sortOptions"
+      ></my-select>
+    </div>
+    <!--    <my-button @click="fetchPosts">get posts</my-button>-->
+    <!--    <input type="text" v-model="modificatorValue">-->
     <my-dialog v-model:show="dialogVisible">
       <post-form @create="createPost"/>
     </my-dialog>
@@ -41,7 +47,12 @@ export default {
       ],
       dialogVisible: false,
       // modificatorValue: ''
-      isPostLoading: false
+      isPostLoading: false,
+      selectedSort: '',
+      sortOptions: [
+        {value: 'title', name: 'by name'},
+        {value: 'body', name: 'by content'}
+      ]
     }
   },
   methods: {
@@ -69,6 +80,18 @@ export default {
   },
   mounted() {
     this.fetchPosts()
+  },
+  computed: {
+    sortedPosts(){
+      return [...this.posts].sort((post1, post2) => post1[this.selectedSort]?.localeCompare(post2[this.selectedSort]))
+    }
+  },
+  watch: {
+    // selectedSort(newValue){
+    //  this.posts.sort((post1, post2) => {
+    //   return post1[newValue]?.localeCompare(post2[newValue])
+    //  })
+    }
   }
 
 }
@@ -86,5 +109,10 @@ export default {
   padding: 20px;
 }
 
+.app__btns {
+  margin: 15px 0;
+  display: flex;
+  justify-content: space-between;
+}
 
 </style>
